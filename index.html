@@ -46,8 +46,13 @@ table{border-collapse:collapse;width:100%;font-size:12px}
 th{background:#f8fafc;color:#475569;font-weight:700;font-size:11px;text-align:right;padding:8px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
 td{padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
-#tblDay td:first-child,#tblDay thead tr:first-child th:first-child{position:sticky;left:0;z-index:1;background:#fff}
-#tblDay thead tr:first-child th:first-child,#tblDay tr.total td:first-child{background:#f8fafc}
+.sticky1 td:first-child,.sticky1 thead tr:first-child th:first-child{position:sticky;left:0;z-index:1;background:#fff}
+.sticky1 thead tr:first-child th:first-child,.sticky1 tr.total td:first-child{background:#f8fafc}
+.pct{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.pct span{min-width:48px}
+.bar{width:90px;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.card-h .fg{font-weight:400}
 tbody tr:hover td{background:#f8fafc}
 tr.total td{font-weight:700;background:#f8fafc;border-top:2px solid #e2e8f0}
 th.grp{text-align:center;font-size:11px;letter-spacing:.4px;text-transform:uppercase}
@@ -76,7 +81,7 @@ th.grp.c{background:#dcfce7;color:#15803d}
 
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="summary">Brand Summary</button>
-  <button class="tab-btn" data-tab="daywise">Day-wise</button>
+  <button class="tab-btn" data-tab="projection">Projection</button>
 </div>
 
 <!-- ── TAB 1: BRAND SUMMARY ── -->
@@ -84,28 +89,29 @@ th.grp.c{background:#dcfce7;color:#15803d}
   <div class="tiles" id="sumTiles"></div>
   <div class="section">
     <div class="card">
-      <div class="card-h"><span class="pill g">Google</span> Brand-wise</div>
-      <div class="tbl-wrap"><table id="tblGoogle"></table></div>
+      <div class="card-h">Brand-wise · <span class="pill g">Google</span><span class="pill m">Meta</span><span class="pill c">Combined</span></div>
+      <div class="tbl-wrap"><table class="sticky1" id="tblBrand"></table></div>
     </div>
   </div>
   <div class="section">
     <div class="card">
-      <div class="card-h"><span class="pill m">Meta</span> Brand-wise</div>
-      <div class="tbl-wrap"><table id="tblMeta"></table></div>
+      <div class="card-h">
+        <span id="dayTitle">Day-wise</span>
+        <div class="fg" style="margin-left:auto"><label for="brandSel">Brand</label><select id="brandSel"></select></div>
+      </div>
+      <div class="tbl-wrap"><table class="sticky1" id="tblDay"></table></div>
     </div>
   </div>
 </div>
 
-<!-- ── TAB 2: DAY-WISE ── -->
-<div class="tab" id="tab-daywise">
-  <div class="filters">
-    <div class="fg"><label for="brandSel">Brand</label><select id="brandSel"></select></div>
-  </div>
-  <div class="tiles" id="dayTiles"></div>
+<!-- ── TAB 2: PROJECTION ── -->
+<div class="tab" id="tab-projection">
+  <div class="tiles" id="projTiles"></div>
   <div class="section">
     <div class="card">
-      <div class="card-h" id="dayTitle">Day-wise</div>
-      <div class="tbl-wrap"><table id="tblDay"></table></div>
+      <div class="card-h">Month-end Projection · Google + Meta</div>
+      <div class="tbl-wrap"><table class="sticky1" id="tblProj"></table></div>
+      <div class="note" id="projNote"></div>
     </div>
   </div>
 </div>
@@ -174,15 +180,24 @@ var TRIGGERS = {
 };
 // ═══ END DATA ═══
 
-var SRC_NAME = {G: 'Google', M: 'Meta'};
+// ═══ PROJECTION SETTINGS (edit by hand) ═══
+// Last day each brand's campaigns run this month, and the trigger target per brand.
+var CAMPAIGN_END = {'Changan': '2026-10-25', 'Peugeot': '2026-10-28', 'Deepal': '2026-10-28'};
+var DEFAULT_END = '2026-10-28';
+var TRIGGER_TARGET = 500;   // per brand
+var TRIGGER_RATE = 0.70;    // projected triggers = 70% of projected generation
+
+var DASH = '<span class="dim">—</span>';
 
 function zero() { return {sp: 0, l: 0, i: 0, c: 0, t: 0}; }
 function add(a, r) { a.sp += r[4]; a.l += r[5]; a.i += r[6]; a.c += r[7]; }
+function addAgg(a, b) { a.sp += b.sp; a.l += b.l; a.i += b.i; a.c += b.c; a.t += b.t; }
 
 function fmtMoney(v) { return 'SAR ' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
 function fmtInt(v) { return Math.round(v).toLocaleString('en-US'); }
-function fmtPct(n, d) { return d ? (n / d * 100).toFixed(2) + '%' : '<span class="dim">—</span>'; }
-function fmtCpl(sp, l) { return l ? fmtMoney(sp / l) : '<span class="dim">—</span>'; }
+function fmt1(v) { return v.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
+function fmtPct(n, d) { return d ? (n / d * 100).toFixed(2) + '%' : DASH; }
+function fmtCpl(sp, l) { return l ? fmtMoney(sp / l) : DASH; }
 function trig(brand, src) { var t = TRIGGERS[brand]; return t ? (src ? t[src] || 0 : (t.G || 0) + (t.M || 0)) : 0; }
 
 var BRANDS = (function() {
@@ -196,23 +211,23 @@ var DATES = (function() {
   DATA_RAW.forEach(function(r) { s[r[0]] = true; });
   return Object.keys(s).sort();
 })();
+var LAST_DATE = DATES[DATES.length - 1];
 
-function fmtDate(s) {
-  var p = s.split('-');
-  return +p[2] + '-' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1] + '-' + p[0];
-}
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(s) { var p = s.split('-'); return +p[2] + '-' + MON[+p[1] - 1] + '-' + p[0]; }
+function fmtShort(s) { var p = s.split('-'); return +p[2] + ' ' + MON[+p[1] - 1]; }
+function dayNum(s) { var p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000; }
 
 function tile(lbl, val, sub) {
   return '<div class="tile"><div class="tile-lbl">' + lbl + '</div><div class="tile-val">' + val + '</div>' +
          (sub ? '<div class="tile-sub">' + sub + '</div>' : '') + '</div>';
 }
 
-// ── TAB 1 ──
-function renderSummary() {
+// ── TAB 1: KPI tiles ──
+function renderTiles() {
   var all = zero();
   DATA_RAW.forEach(function(r) { add(all, r); });
   BRANDS.forEach(function(b) { all.t += trig(b); });
-
   document.getElementById('sumTiles').innerHTML =
     tile('Spends', fmtMoney(all.sp), 'Google + Meta') +
     tile('Panel Leads', fmtInt(all.l)) +
@@ -222,78 +237,136 @@ function renderSummary() {
     tile('CTR %', fmtPct(all.c, all.i)) +
     tile('Triggered Leads', fmtInt(all.t)) +
     tile('Trigger %', fmtPct(all.t, all.l), 'Triggered / Panel leads');
-
-  renderBrandTable('tblGoogle', 'G');
-  renderBrandTable('tblMeta', 'M');
 }
 
-function renderBrandTable(id, src) {
-  var by = {}, tot = zero();
-  BRANDS.forEach(function(b) { by[b] = zero(); by[b].t = trig(b, src); });
-  DATA_RAW.forEach(function(r) { if (r[1] === src) add(by[r[2]], r); });
+// Two-row header: Google | Meta | Combined groups over the same KPI columns.
+function groupHead(firstCol, cols) {
+  var sub = cols.map(function(k, i) { return '<th' + (i === 0 ? ' class="bl"' : '') + '>' + k + '</th>'; }).join('');
+  var n = cols.length;
+  return '<thead><tr><th rowspan="2">' + firstCol + '</th>' +
+         '<th class="grp g bl" colspan="' + n + '">Google</th><th class="grp m bl" colspan="' + n + '">Meta</th>' +
+         '<th class="grp c bl" colspan="' + n + '">Combined</th></tr><tr>' + sub + sub + sub + '</tr></thead>';
+}
 
-  var head = '<thead><tr><th>Brand</th><th>Spends</th><th>Panel Leads</th><th>CPL</th><th>Impressions</th>' +
-             '<th>Clicks</th><th>CTR %</th><th>Triggered Leads</th><th>Trigger %</th></tr></thead>';
-  var row = function(name, a, cls) {
-    return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + name + '</td><td>' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) +
-           '</td><td>' + fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' +
-           fmtPct(a.c, a.i) + '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td></tr>';
-  };
-  var body = '';
+// ── TAB 1: brand table ──
+var BRAND_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %', 'Triggered Leads', 'Trigger %'];
+
+function brandCells(a) {
+  return '<td class="bl">' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' + fmtCpl(a.sp, a.l) +
+         '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) +
+         '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td>';
+}
+
+function renderBrandTable() {
+  var tot = {G: zero(), M: zero(), C: zero()}, body = '';
   BRANDS.forEach(function(b) {
-    var a = by[b];
-    if (!a.sp && !a.l && !a.i && !a.t) return; // brand not running on this source
-    body += row(b, a);
-    tot.sp += a.sp; tot.l += a.l; tot.i += a.i; tot.c += a.c; tot.t += a.t;
+    var x = {G: zero(), M: zero(), C: zero()};
+    DATA_RAW.forEach(function(r) { if (r[2] === b) add(x[r[1]], r); });
+    x.G.t = trig(b, 'G'); x.M.t = trig(b, 'M');
+    addAgg(x.C, x.G); addAgg(x.C, x.M);
+    ['G', 'M', 'C'].forEach(function(k) { addAgg(tot[k], x[k]); });
+    body += '<tr><td>' + b + '</td>' + brandCells(x.G) + brandCells(x.M) + brandCells(x.C) + '</tr>';
   });
-  if (!body) body = '<tr><td colspan="9" class="dim">No ' + SRC_NAME[src] + ' data yet</td></tr>';
-  else body += row('Total', tot, 'total');
-  document.getElementById(id).innerHTML = head + '<tbody>' + body + '</tbody>';
+  body += '<tr class="total"><td>Total</td>' + brandCells(tot.G) + brandCells(tot.M) + brandCells(tot.C) + '</tr>';
+  document.getElementById('tblBrand').innerHTML = groupHead('Brand', BRAND_COLS) + '<tbody>' + body + '</tbody>';
 }
 
-// ── TAB 2 ──
-var KPI_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %'];
+// ── TAB 1: day-wise for the selected brand ──
+var DAY_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %'];
 
-function cells(a, first) {
-  return '<td' + (first ? ' class="bl"' : '') + '>' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' +
+function dayCells(a) {
+  return '<td class="bl">' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' +
          fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) + '</td>';
 }
 
 function renderDaywise() {
   var brand = document.getElementById('brandSel').value;
-  var rows = DATA_RAW.filter(function(r) { return brand === '__all' || r[2] === brand; });
-
   var byDay = {}, tot = {G: zero(), M: zero(), C: zero()};
   DATES.forEach(function(d) { byDay[d] = {G: zero(), M: zero(), C: zero()}; });
-  rows.forEach(function(r) {
+  DATA_RAW.forEach(function(r) {
+    if (brand !== '__all' && r[2] !== brand) return;
     add(byDay[r[0]][r[1]], r); add(byDay[r[0]].C, r);
     add(tot[r[1]], r); add(tot.C, r);
   });
 
-  document.getElementById('dayTiles').innerHTML =
-    tile('Spends', fmtMoney(tot.C.sp), 'Google ' + fmtMoney(tot.G.sp) + ' · Meta ' + fmtMoney(tot.M.sp)) +
-    tile('Panel Leads', fmtInt(tot.C.l), 'Google ' + fmtInt(tot.G.l) + ' · Meta ' + fmtInt(tot.M.l)) +
-    tile('CPL', fmtCpl(tot.C.sp, tot.C.l)) +
-    tile('Impressions', fmtInt(tot.C.i)) +
-    tile('Clicks', fmtInt(tot.C.c)) +
-    tile('CTR %', fmtPct(tot.C.c, tot.C.i));
+  document.getElementById('dayTitle').textContent = 'Day-wise · ' + (brand === '__all' ? 'All brands' : brand);
 
-  document.getElementById('dayTitle').textContent =
-    'Day-wise · ' + (brand === '__all' ? 'All brands' : brand);
-
-  var sub = KPI_COLS.map(function(k, i) { return '<th' + (i === 0 ? ' class="bl"' : '') + '>' + k + '</th>'; }).join('');
-  var head = '<thead><tr><th rowspan="2">Date</th>' +
-             '<th class="grp g bl" colspan="6">Google</th><th class="grp m bl" colspan="6">Meta</th>' +
-             '<th class="grp c bl" colspan="6">Combined</th></tr><tr>' + sub + sub + sub + '</tr></thead>';
   var body = '';
   DATES.forEach(function(d) {
     var x = byDay[d];
     if (!x.C.sp && !x.C.l && !x.C.i) return;
-    body += '<tr><td>' + fmtDate(d) + '</td>' + cells(x.G, true) + cells(x.M, true) + cells(x.C, true) + '</tr>';
+    body += '<tr><td>' + fmtDate(d) + '</td>' + dayCells(x.G) + dayCells(x.M) + dayCells(x.C) + '</tr>';
   });
   if (!body) body = '<tr><td colspan="19" class="dim">No data for this brand</td></tr>';
-  else body += '<tr class="total"><td>Total</td>' + cells(tot.G, true) + cells(tot.M, true) + cells(tot.C, true) + '</tr>';
-  document.getElementById('tblDay').innerHTML = head + '<tbody>' + body + '</tbody>';
+  else body += '<tr class="total"><td>Total</td>' + dayCells(tot.G) + dayCells(tot.M) + dayCells(tot.C) + '</tr>';
+  document.getElementById('tblDay').innerHTML = groupHead('Date', DAY_COLS) + '<tbody>' + body + '</tbody>';
+}
+
+// ── TAB 2: PROJECTION ──
+// Days running = first date with spend for the brand → last data date (inclusive).
+// Remaining days = last data date → the brand's campaign end date.
+function projectBrand(b) {
+  var gen = 0, first = null;
+  DATA_RAW.forEach(function(r) {
+    if (r[2] !== b) return;
+    gen += r[5];
+    if (r[4] > 0 && (!first || r[0] < first)) first = r[0];
+  });
+  var end = CAMPAIGN_END[b] || DEFAULT_END;
+  var days = first ? dayNum(LAST_DATE) - dayNum(first) + 1 : 0;
+  var remaining = Math.max(0, dayNum(end) - dayNum(LAST_DATE));
+  var avg = days ? gen / days : 0;
+  var projected = gen + avg * remaining;
+  return {brand: b, first: first, end: end, days: days, gen: gen, avg: avg, remaining: remaining,
+          projected: projected, triggers: projected * TRIGGER_RATE, target: TRIGGER_TARGET};
+}
+
+function pctCell(pct) {
+  var col = pct >= 1 ? '#059669' : pct >= 0.7 ? '#d97706' : '#dc2626';
+  return '<td><div class="pct"><div class="bar"><div class="bar-fill" style="width:' + Math.min(100, pct * 100).toFixed(1) +
+         '%;background:' + col + '"></div></div><span>' + (pct * 100).toFixed(1) + '%</span></div></td>';
+}
+
+function renderProjection() {
+  var rate = Math.round(TRIGGER_RATE * 100);
+  var tot = {gen: 0, avg: 0, projected: 0, triggers: 0, target: 0};
+  var body = BRANDS.map(projectBrand).map(function(p) {
+    tot.gen += p.gen; tot.avg += p.avg; tot.projected += p.projected; tot.triggers += p.triggers; tot.target += p.target;
+    return '<tr><td>' + p.brand + '</td>' +
+      '<td>' + (p.first ? fmtShort(p.first) : DASH) + '</td>' +
+      '<td>' + fmtShort(p.end) + '</td>' +
+      '<td>' + p.days + '</td>' +
+      '<td>' + fmtInt(p.gen) + '</td>' +
+      '<td>' + fmt1(p.avg) + '</td>' +
+      '<td>' + p.remaining + '</td>' +
+      '<td class="bl"><b>' + fmtInt(p.projected) + '</b></td>' +
+      '<td>' + fmtInt(p.triggers) + '</td>' +
+      '<td>' + fmtInt(p.target) + '</td>' +
+      pctCell(p.target ? p.triggers / p.target : 0) + '</tr>';
+  }).join('');
+  var tpct = tot.target ? tot.triggers / tot.target : 0;
+  body += '<tr class="total"><td>Total</td><td></td><td></td><td></td><td>' + fmtInt(tot.gen) + '</td><td>' + fmt1(tot.avg) +
+    '</td><td></td><td class="bl">' + fmtInt(tot.projected) + '</td><td>' + fmtInt(tot.triggers) + '</td><td>' +
+    fmtInt(tot.target) + '</td>' + pctCell(tpct) + '</tr>';
+
+  document.getElementById('tblProj').innerHTML =
+    '<thead><tr><th>Brand</th><th>Start</th><th>End</th><th>Days Running</th><th>Gen Till Date</th>' +
+    '<th>Avg Gen / Day</th><th>Remaining Days</th><th class="bl">Projected Month-end Gen</th>' +
+    '<th>Projected Triggers (' + rate + '%)</th><th>Target Triggers</th><th>% Completion</th></tr></thead>' +
+    '<tbody>' + body + '</tbody>';
+
+  document.getElementById('projTiles').innerHTML =
+    tile('Gen Till Date', fmtInt(tot.gen), 'up to ' + fmtDate(LAST_DATE)) +
+    tile('Avg Gen / Day', fmt1(tot.avg), 'all brands') +
+    tile('Projected Month-end Gen', fmtInt(tot.projected)) +
+    tile('Projected Triggers', fmtInt(tot.triggers), rate + '% of projected gen') +
+    tile('Target Triggers', fmtInt(tot.target), fmtInt(TRIGGER_TARGET) + ' per brand') +
+    tile('% Completion', (tpct * 100).toFixed(1) + '%', 'Projected / target triggers');
+
+  document.getElementById('projNote').textContent =
+    'Gen = panel leads (Google conversions + Meta leads). Days running = first day with spend → ' + fmtShort(LAST_DATE) +
+    ' (last data day). Remaining days = after ' + fmtShort(LAST_DATE) + ' → campaign end date. ' +
+    'Projected gen = Gen till date + Avg/day × Remaining days. Projected triggers = ' + rate + '% of projected gen.';
 }
 
 // ── INIT ──
@@ -301,13 +374,12 @@ function renderDaywise() {
   document.getElementById('buildTs').textContent = 'Last updated: ' + BUILD_TS;
   if (DATES.length) {
     document.getElementById('period').textContent =
-      'Google + Meta · ' + fmtDate(DATES[0]) + ' to ' + fmtDate(DATES[DATES.length - 1]) + ' · all amounts in SAR';
+      'Google + Meta · ' + fmtDate(DATES[0]) + ' to ' + fmtDate(LAST_DATE) + ' · all amounts in SAR';
   }
 
   var sel = document.getElementById('brandSel');
   sel.innerHTML = '<option value="__all">All brands</option>' +
     BRANDS.map(function(b) { return '<option>' + b + '</option>'; }).join('');
-  sel.value = BRANDS[0] || '__all';
   sel.addEventListener('change', renderDaywise);
 
   document.querySelectorAll('.tab-btn').forEach(function(btn) {
@@ -319,8 +391,10 @@ function renderDaywise() {
     });
   });
 
-  renderSummary();
+  renderTiles();
+  renderBrandTable();
   renderDaywise();
+  renderProjection();
 })();
 </script>
 </body>
