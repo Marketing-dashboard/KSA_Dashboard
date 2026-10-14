@@ -239,13 +239,13 @@ function renderTiles() {
     tile('Trigger %', fmtPct(all.t, all.l), 'Triggered / Panel leads');
 }
 
-// Two-row header: Google | Meta | Combined groups over the same KPI columns.
+// Two-row header: Combined | Google | Meta groups over the same KPI columns.
 function groupHead(firstCol, cols) {
   var sub = cols.map(function(k, i) { return '<th' + (i === 0 ? ' class="bl"' : '') + '>' + k + '</th>'; }).join('');
   var n = cols.length;
   return '<thead><tr><th rowspan="2">' + firstCol + '</th>' +
-         '<th class="grp g bl" colspan="' + n + '">Google</th><th class="grp m bl" colspan="' + n + '">Meta</th>' +
-         '<th class="grp c bl" colspan="' + n + '">Combined</th></tr><tr>' + sub + sub + sub + '</tr></thead>';
+         '<th class="grp c bl" colspan="' + n + '">Combined</th>' +
+         '<th class="grp g bl" colspan="' + n + '">Google</th><th class="grp m bl" colspan="' + n + '">Meta</th></tr><tr>' + sub + sub + sub + '</tr></thead>';
 }
 
 // ── TAB 1: brand table ──
@@ -265,9 +265,9 @@ function renderBrandTable() {
     x.G.t = trig(b, 'G'); x.M.t = trig(b, 'M');
     addAgg(x.C, x.G); addAgg(x.C, x.M);
     ['G', 'M', 'C'].forEach(function(k) { addAgg(tot[k], x[k]); });
-    body += '<tr><td>' + b + '</td>' + brandCells(x.G) + brandCells(x.M) + brandCells(x.C) + '</tr>';
+    body += '<tr><td>' + b + '</td>' + brandCells(x.C) + brandCells(x.G) + brandCells(x.M) + '</tr>';
   });
-  body += '<tr class="total"><td>Total</td>' + brandCells(tot.G) + brandCells(tot.M) + brandCells(tot.C) + '</tr>';
+  body += '<tr class="total"><td>Total</td>' + brandCells(tot.C) + brandCells(tot.G) + brandCells(tot.M) + '</tr>';
   document.getElementById('tblBrand').innerHTML = groupHead('Brand', BRAND_COLS) + '<tbody>' + body + '</tbody>';
 }
 
@@ -295,29 +295,30 @@ function renderDaywise() {
   DATES.forEach(function(d) {
     var x = byDay[d];
     if (!x.C.sp && !x.C.l && !x.C.i) return;
-    body += '<tr><td>' + fmtDate(d) + '</td>' + dayCells(x.G) + dayCells(x.M) + dayCells(x.C) + '</tr>';
+    body += '<tr><td>' + fmtDate(d) + '</td>' + dayCells(x.C) + dayCells(x.G) + dayCells(x.M) + '</tr>';
   });
   if (!body) body = '<tr><td colspan="19" class="dim">No data for this brand</td></tr>';
-  else body += '<tr class="total"><td>Total</td>' + dayCells(tot.G) + dayCells(tot.M) + dayCells(tot.C) + '</tr>';
+  else body += '<tr class="total"><td>Total</td>' + dayCells(tot.C) + dayCells(tot.G) + dayCells(tot.M) + '</tr>';
   document.getElementById('tblDay').innerHTML = groupHead('Date', DAY_COLS) + '<tbody>' + body + '</tbody>';
 }
 
 // ── TAB 2: PROJECTION ──
 // Days running = first date with spend for the brand → last data date (inclusive).
 // Remaining days = last data date → the brand's campaign end date.
+// Projected gen = gen till date + yesterday's (last data day's) gen × remaining days.
 function projectBrand(b) {
-  var gen = 0, first = null;
+  var gen = 0, yest = 0, first = null;
   DATA_RAW.forEach(function(r) {
     if (r[2] !== b) return;
     gen += r[5];
+    if (r[0] === LAST_DATE) yest += r[5];
     if (r[4] > 0 && (!first || r[0] < first)) first = r[0];
   });
   var end = CAMPAIGN_END[b] || DEFAULT_END;
   var days = first ? dayNum(LAST_DATE) - dayNum(first) + 1 : 0;
   var remaining = Math.max(0, dayNum(end) - dayNum(LAST_DATE));
-  var avg = days ? gen / days : 0;
-  var projected = gen + avg * remaining;
-  return {brand: b, first: first, end: end, days: days, gen: gen, avg: avg, remaining: remaining,
+  var projected = gen + yest * remaining;
+  return {brand: b, first: first, end: end, days: days, gen: gen, yest: yest, remaining: remaining,
           projected: projected, triggers: projected * TRIGGER_RATE, target: TRIGGER_TARGET};
 }
 
@@ -329,15 +330,15 @@ function pctCell(pct) {
 
 function renderProjection() {
   var rate = Math.round(TRIGGER_RATE * 100);
-  var tot = {gen: 0, avg: 0, projected: 0, triggers: 0, target: 0};
+  var tot = {gen: 0, yest: 0, projected: 0, triggers: 0, target: 0};
   var body = BRANDS.map(projectBrand).map(function(p) {
-    tot.gen += p.gen; tot.avg += p.avg; tot.projected += p.projected; tot.triggers += p.triggers; tot.target += p.target;
+    tot.gen += p.gen; tot.yest += p.yest; tot.projected += p.projected; tot.triggers += p.triggers; tot.target += p.target;
     return '<tr><td>' + p.brand + '</td>' +
       '<td>' + (p.first ? fmtShort(p.first) : DASH) + '</td>' +
       '<td>' + fmtShort(p.end) + '</td>' +
       '<td>' + p.days + '</td>' +
       '<td>' + fmtInt(p.gen) + '</td>' +
-      '<td>' + fmt1(p.avg) + '</td>' +
+      '<td>' + fmt1(p.yest) + '</td>' +
       '<td>' + p.remaining + '</td>' +
       '<td class="bl"><b>' + fmtInt(p.projected) + '</b></td>' +
       '<td>' + fmtInt(p.triggers) + '</td>' +
@@ -345,19 +346,19 @@ function renderProjection() {
       pctCell(p.target ? p.triggers / p.target : 0) + '</tr>';
   }).join('');
   var tpct = tot.target ? tot.triggers / tot.target : 0;
-  body += '<tr class="total"><td>Total</td><td></td><td></td><td></td><td>' + fmtInt(tot.gen) + '</td><td>' + fmt1(tot.avg) +
+  body += '<tr class="total"><td>Total</td><td></td><td></td><td></td><td>' + fmtInt(tot.gen) + '</td><td>' + fmt1(tot.yest) +
     '</td><td></td><td class="bl">' + fmtInt(tot.projected) + '</td><td>' + fmtInt(tot.triggers) + '</td><td>' +
     fmtInt(tot.target) + '</td>' + pctCell(tpct) + '</tr>';
 
   document.getElementById('tblProj').innerHTML =
     '<thead><tr><th>Brand</th><th>Start</th><th>End</th><th>Days Running</th><th>Gen Till Date</th>' +
-    '<th>Avg Gen / Day</th><th>Remaining Days</th><th class="bl">Projected Month-end Gen</th>' +
+    '<th>Yesterday’s Gen (' + fmtShort(LAST_DATE) + ')</th><th>Remaining Days</th><th class="bl">Projected Month-end Gen</th>' +
     '<th>Projected Triggers (' + rate + '%)</th><th>Target Triggers</th><th>% Completion</th></tr></thead>' +
     '<tbody>' + body + '</tbody>';
 
   document.getElementById('projTiles').innerHTML =
     tile('Gen Till Date', fmtInt(tot.gen), 'up to ' + fmtDate(LAST_DATE)) +
-    tile('Avg Gen / Day', fmt1(tot.avg), 'all brands') +
+    tile('Yesterday’s Gen', fmt1(tot.yest), fmtDate(LAST_DATE) + ' · all brands') +
     tile('Projected Month-end Gen', fmtInt(tot.projected)) +
     tile('Projected Triggers', fmtInt(tot.triggers), rate + '% of projected gen') +
     tile('Target Triggers', fmtInt(tot.target), fmtInt(TRIGGER_TARGET) + ' per brand') +
@@ -366,7 +367,7 @@ function renderProjection() {
   document.getElementById('projNote').textContent =
     'Gen = panel leads (Google conversions + Meta leads). Days running = first day with spend → ' + fmtShort(LAST_DATE) +
     ' (last data day). Remaining days = after ' + fmtShort(LAST_DATE) + ' → campaign end date. ' +
-    'Projected gen = Gen till date + Avg/day × Remaining days. Projected triggers = ' + rate + '% of projected gen.';
+    'Projected gen = Gen till date + Yesterday’s gen (' + fmtShort(LAST_DATE) + ') × Remaining days. Projected triggers = ' + rate + '% of projected gen.';
 }
 
 // ── INIT ──
