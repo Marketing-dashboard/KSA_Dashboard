@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KSA Performance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+
+.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 55%,#0f3460 100%);color:#fff;padding:20px 28px 16px}
+.header h1{font-size:20px;font-weight:700;letter-spacing:.5px}
+.header p{font-size:11px;color:#94a3b8;margin-top:3px}
+.build-ts{font-size:10px;color:#64748b;margin-top:6px}
+
+.tab-bar{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;padding:0 28px;overflow-x:auto}
+.tab-btn{padding:11px 22px;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab-btn:hover{color:#0f3460}
+.tab-btn.active{color:#0f3460;border-bottom-color:#0f3460}
+.tab{display:none}
+.tab.active{display:block}
+
+.filters{display:flex;gap:10px;flex-wrap:wrap;padding:12px 28px;background:#fff;border-bottom:1px solid #e2e8f0;align-items:center}
+.fg{display:flex;align-items:center;gap:5px}
+.fg label{font-size:11px;font-weight:600;color:#64748b;white-space:nowrap}
+.fg select{border:1.5px solid #e2e8f0;border-radius:7px;padding:6px 10px;font-size:12px;background:#fff;color:#1a1a2e;outline:none;cursor:pointer}
+.fg select:focus{border-color:#0f3460}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:16px 28px 0}
+.tile{background:#fff;border-radius:10px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.tile-lbl{font-size:10px;font-weight:600;color:#64748b;letter-spacing:.4px;text-transform:uppercase}
+.tile-val{font-size:18px;white-space:nowrap;font-weight:700;margin-top:3px;color:#0f3460}
+.tile-sub{font-size:10px;color:#94a3b8;margin-top:1px}
+
+.section{padding:16px 28px 0}
+.section:last-child{padding-bottom:28px}
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+.card-h{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700;color:#0f3460}
+.pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.pill.g{background:#e0f2fe;color:#0369a1}
+.pill.m{background:#ede9fe;color:#6d28d9}
+.pill.c{background:#dcfce7;color:#15803d}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{background:#f8fafc;color:#475569;font-weight:700;font-size:11px;text-align:right;padding:8px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+#tblDay td:first-child,#tblDay thead tr:first-child th:first-child{position:sticky;left:0;z-index:1;background:#fff}
+#tblDay thead tr:first-child th:first-child,#tblDay tr.total td:first-child{background:#f8fafc}
+tbody tr:hover td{background:#f8fafc}
+tr.total td{font-weight:700;background:#f8fafc;border-top:2px solid #e2e8f0}
+th.grp{text-align:center;font-size:11px;letter-spacing:.4px;text-transform:uppercase}
+th.grp.g{background:#e0f2fe;color:#0369a1}
+th.grp.m{background:#ede9fe;color:#6d28d9}
+th.grp.c{background:#dcfce7;color:#15803d}
+.bl{border-left:2px solid #e2e8f0}
+.dim{color:#94a3b8}
+.note{font-size:10px;color:#94a3b8;padding:8px 16px}
+
+@media (max-width:640px){
+  .header,.tab-bar,.filters{padding-left:16px;padding-right:16px}
+  .tiles,.section{padding-left:16px;padding-right:16px}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .tile-val{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>KSA Performance Dashboard</h1>
+  <p id="period">Google + Meta · all amounts in SAR</p>
+  <div class="build-ts" id="buildTs"></div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="summary">Brand Summary</button>
+  <button class="tab-btn" data-tab="daywise">Day-wise</button>
+</div>
+
+<!-- ── TAB 1: BRAND SUMMARY ── -->
+<div class="tab active" id="tab-summary">
+  <div class="tiles" id="sumTiles"></div>
+  <div class="section">
+    <div class="card">
+      <div class="card-h"><span class="pill g">Google</span> Brand-wise</div>
+      <div class="tbl-wrap"><table id="tblGoogle"></table></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="card">
+      <div class="card-h"><span class="pill m">Meta</span> Brand-wise</div>
+      <div class="tbl-wrap"><table id="tblMeta"></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TAB 2: DAY-WISE ── -->
+<div class="tab" id="tab-daywise">
+  <div class="filters">
+    <div class="fg"><label for="brandSel">Brand</label><select id="brandSel"></select></div>
+  </div>
+  <div class="tiles" id="dayTiles"></div>
+  <div class="section">
+    <div class="card">
+      <div class="card-h" id="dayTitle">Day-wise</div>
+      <div class="tbl-wrap"><table id="tblDay"></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ DATA (rewritten by the Apps Script) ═══
+// [date, source G/M, brand, campaign, spends SAR, leads, impressions, clicks]
+var BUILD_TS = '2026-10-14 10:00 IST';
+var DATA_RAW = [
+  ['2026-10-01','G','Peugeot','KSA-Peugeot-Search-Arabic',113.04,6,263,34],
+  ['2026-10-01','G','Peugeot','KSA-Peugeot-Search-Oct-26',9.05,0,22,3],
+  ['2026-10-02','G','Peugeot','KSA-Peugeot-Search-Arabic',138.58,5,512,56],
+  ['2026-10-02','G','Peugeot','KSA-Peugeot-Search-Oct-26',2.48,0,21,1],
+  ['2026-10-03','G','Peugeot','KSA-Peugeot-Search-Arabic',205.89,5,537,57],
+  ['2026-10-03','G','Peugeot','KSA-Peugeot-Search-Oct-26',10.12,0,69,5],
+  ['2026-10-04','G','Peugeot','KSA-Peugeot-Search-Arabic',158.44,9,443,50],
+  ['2026-10-04','G','Peugeot','KSA-Peugeot-Search-Oct-26',94.92,2,267,37],
+  ['2026-10-05','G','Peugeot','KSA-Peugeot-Search-Arabic',148.57,7,381,63],
+  ['2026-10-05','G','Peugeot','KSA-Peugeot-Search-Oct-26',100,1,160,23],
+  ['2026-10-06','G','Peugeot','KSA-Peugeot-Search-Arabic',152.96,8,399,72],
+  ['2026-10-06','G','Peugeot','KSA-Peugeot-Search-Oct-26',53.05,1,97,21],
+  ['2026-10-07','G','Changan','KSA-Changan-Search-Arabic',100.95,2.01,759,67],
+  ['2026-10-07','G','Deepal','KSA-Deepal-Search-Arabic',102.13,0,204,35],
+  ['2026-10-07','G','Peugeot','KSA-Peugeot-Search-Arabic',151.74,4,455,67],
+  ['2026-10-07','G','Peugeot','KSA-Peugeot-Search-Oct-26',52.01,1,57,14],
+  ['2026-10-08','G','Changan','KSA-Changan-Search-Arabic',103.54,7,1584,103],
+  ['2026-10-08','G','Deepal','KSA-Deepal-Search-Arabic',104.7,3,529,73],
+  ['2026-10-08','G','Peugeot','KSA-Peugeot-Search-Arabic',151.56,7.33,531,94],
+  ['2026-10-08','G','Peugeot','KSA-Peugeot-Search-Oct-26',50.88,0.67,273,25],
+  ['2026-10-09','G','Changan','KSA-Changan-Search',101.31,4,281,46],
+  ['2026-10-09','G','Changan','KSA-Changan-Search-Arabic',151.4,9.49,1883,145],
+  ['2026-10-09','G','Deepal','KSA-Deepal-Search-Arabic',103.4,4,797,104],
+  ['2026-10-09','G','Peugeot','KSA-Peugeot-Search-Arabic',154.68,6,459,101],
+  ['2026-10-09','G','Peugeot','KSA-Peugeot-Search-Oct-26',54.82,1,164,23],
+  ['2026-10-10','G','Changan','KSA-Changan-Search',104.91,7,413,52],
+  ['2026-10-10','G','Changan','KSA-Changan-Search-Arabic',247.3,9.5,2632,197],
+  ['2026-10-10','G','Deepal','KSA-Deepal-Search-Arabic',103.31,5,718,79],
+  ['2026-10-10','G','Peugeot','KSA-Peugeot-Search-Arabic',150.93,5,533,94],
+  ['2026-10-10','G','Peugeot','KSA-Peugeot-Search-Oct-26',50.88,2,127,20],
+  ['2026-10-11','G','Changan','KSA-Changan-Search',102.82,2,273,41],
+  ['2026-10-11','G','Changan','KSA-Changan-Search-Arabic',265.02,15,2902,191],
+  ['2026-10-11','G','Deepal','KSA-Deepal-Search-Arabic',104.46,7,980,98],
+  ['2026-10-11','G','Peugeot','KSA-Peugeot-Search-Arabic',150.28,4,462,86],
+  ['2026-10-11','G','Peugeot','KSA-Peugeot-Search-Oct-26',33.23,0,140,11],
+  ['2026-10-12','G','Changan','KSA-Changan-Search',105.32,6,476,60],
+  ['2026-10-12','G','Changan','KSA-Changan-Search-Arabic',296.81,15.5,2420,187],
+  ['2026-10-12','G','Deepal','KSA-Deepal-Search-Arabic',103.9,4,1152,76],
+  ['2026-10-12','G','Peugeot','KSA-Peugeot-Search-Arabic',147.79,8.5,606,80],
+  ['2026-10-12','G','Peugeot','KSA-Peugeot-Search-Oct-26',66.77,1.5,156,21],
+  ['2026-10-13','G','Changan','KSA-Changan-DG-Arabic',25.13,0,5758,41],
+  ['2026-10-13','G','Changan','KSA-Changan-Search',103.92,3,360,46],
+  ['2026-10-13','G','Changan','KSA-Changan-Search-Arabic',318.52,13.5,2191,183],
+  ['2026-10-13','G','Deepal','KSA-Deepal-DG-Arabic',101.4,1,20249,184],
+  ['2026-10-13','G','Deepal','KSA-Deepal-Search-Arabic',103.91,5,2434,79],
+  ['2026-10-13','G','Peugeot','KSA-Peugeot-Search-Arabic',204.64,5,994,119],
+  ['2026-10-13','G','Peugeot','KSA-Peugeot-Search-Oct-26',69.48,1,237,21],
+  ['2026-10-12','M','Changan','KSA-Changan-Meta-Lead-Form',30.23,5,1697,39],
+  ['2026-10-13','M','Changan','KSA-Changan-Meta-Lead-Form',134.93,7,5295,79],
+  ['2026-10-13','M','Deepal','KSA-Deepal-Meta-Lead-Form',58.01,4,2574,51]
+];
+// Triggered leads by brand and source (G = Google, M = Meta)
+var TRIGGERS = {
+  'Peugeot': {G: 72, M: 0},
+  'Changan': {G: 59, M: 0},
+  'Deepal':  {G: 0,  M: 0}
+};
+// ═══ END DATA ═══
+
+var SRC_NAME = {G: 'Google', M: 'Meta'};
+
+function zero() { return {sp: 0, l: 0, i: 0, c: 0, t: 0}; }
+function add(a, r) { a.sp += r[4]; a.l += r[5]; a.i += r[6]; a.c += r[7]; }
+
+function fmtMoney(v) { return 'SAR ' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtInt(v) { return Math.round(v).toLocaleString('en-US'); }
+function fmtPct(n, d) { return d ? (n / d * 100).toFixed(2) + '%' : '<span class="dim">—</span>'; }
+function fmtCpl(sp, l) { return l ? fmtMoney(sp / l) : '<span class="dim">—</span>'; }
+function trig(brand, src) { var t = TRIGGERS[brand]; return t ? (src ? t[src] || 0 : (t.G || 0) + (t.M || 0)) : 0; }
+
+var BRANDS = (function() {
+  var s = {};
+  DATA_RAW.forEach(function(r) { s[r[2]] = true; });
+  Object.keys(TRIGGERS).forEach(function(b) { s[b] = true; });
+  return Object.keys(s).sort();
+})();
+var DATES = (function() {
+  var s = {};
+  DATA_RAW.forEach(function(r) { s[r[0]] = true; });
+  return Object.keys(s).sort();
+})();
+
+function fmtDate(s) {
+  var p = s.split('-');
+  return +p[2] + '-' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1] + '-' + p[0];
+}
+
+function tile(lbl, val, sub) {
+  return '<div class="tile"><div class="tile-lbl">' + lbl + '</div><div class="tile-val">' + val + '</div>' +
+         (sub ? '<div class="tile-sub">' + sub + '</div>' : '') + '</div>';
+}
+
+// ── TAB 1 ──
+function renderSummary() {
+  var all = zero();
+  DATA_RAW.forEach(function(r) { add(all, r); });
+  BRANDS.forEach(function(b) { all.t += trig(b); });
+
+  document.getElementById('sumTiles').innerHTML =
+    tile('Spends', fmtMoney(all.sp), 'Google + Meta') +
+    tile('Panel Leads', fmtInt(all.l)) +
+    tile('CPL', fmtCpl(all.sp, all.l)) +
+    tile('Impressions', fmtInt(all.i)) +
+    tile('Clicks', fmtInt(all.c)) +
+    tile('CTR %', fmtPct(all.c, all.i)) +
+    tile('Triggered Leads', fmtInt(all.t)) +
+    tile('Trigger %', fmtPct(all.t, all.l), 'Triggered / Panel leads');
+
+  renderBrandTable('tblGoogle', 'G');
+  renderBrandTable('tblMeta', 'M');
+}
+
+function renderBrandTable(id, src) {
+  var by = {}, tot = zero();
+  BRANDS.forEach(function(b) { by[b] = zero(); by[b].t = trig(b, src); });
+  DATA_RAW.forEach(function(r) { if (r[1] === src) add(by[r[2]], r); });
+
+  var head = '<thead><tr><th>Brand</th><th>Spends</th><th>Panel Leads</th><th>CPL</th><th>Impressions</th>' +
+             '<th>Clicks</th><th>CTR %</th><th>Triggered Leads</th><th>Trigger %</th></tr></thead>';
+  var row = function(name, a, cls) {
+    return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + name + '</td><td>' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) +
+           '</td><td>' + fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' +
+           fmtPct(a.c, a.i) + '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td></tr>';
+  };
+  var body = '';
+  BRANDS.forEach(function(b) {
+    var a = by[b];
+    if (!a.sp && !a.l && !a.i && !a.t) return; // brand not running on this source
+    body += row(b, a);
+    tot.sp += a.sp; tot.l += a.l; tot.i += a.i; tot.c += a.c; tot.t += a.t;
+  });
+  if (!body) body = '<tr><td colspan="9" class="dim">No ' + SRC_NAME[src] + ' data yet</td></tr>';
+  else body += row('Total', tot, 'total');
+  document.getElementById(id).innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+
+// ── TAB 2 ──
+var KPI_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %'];
+
+function cells(a, first) {
+  return '<td' + (first ? ' class="bl"' : '') + '>' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' +
+         fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) + '</td>';
+}
+
+function renderDaywise() {
+  var brand = document.getElementById('brandSel').value;
+  var rows = DATA_RAW.filter(function(r) { return brand === '__all' || r[2] === brand; });
+
+  var byDay = {}, tot = {G: zero(), M: zero(), C: zero()};
+  DATES.forEach(function(d) { byDay[d] = {G: zero(), M: zero(), C: zero()}; });
+  rows.forEach(function(r) {
+    add(byDay[r[0]][r[1]], r); add(byDay[r[0]].C, r);
+    add(tot[r[1]], r); add(tot.C, r);
+  });
+
+  document.getElementById('dayTiles').innerHTML =
+    tile('Spends', fmtMoney(tot.C.sp), 'Google ' + fmtMoney(tot.G.sp) + ' · Meta ' + fmtMoney(tot.M.sp)) +
+    tile('Panel Leads', fmtInt(tot.C.l), 'Google ' + fmtInt(tot.G.l) + ' · Meta ' + fmtInt(tot.M.l)) +
+    tile('CPL', fmtCpl(tot.C.sp, tot.C.l)) +
+    tile('Impressions', fmtInt(tot.C.i)) +
+    tile('Clicks', fmtInt(tot.C.c)) +
+    tile('CTR %', fmtPct(tot.C.c, tot.C.i));
+
+  document.getElementById('dayTitle').textContent =
+    'Day-wise · ' + (brand === '__all' ? 'All brands' : brand);
+
+  var sub = KPI_COLS.map(function(k, i) { return '<th' + (i === 0 ? ' class="bl"' : '') + '>' + k + '</th>'; }).join('');
+  var head = '<thead><tr><th rowspan="2">Date</th>' +
+             '<th class="grp g bl" colspan="6">Google</th><th class="grp m bl" colspan="6">Meta</th>' +
+             '<th class="grp c bl" colspan="6">Combined</th></tr><tr>' + sub + sub + sub + '</tr></thead>';
+  var body = '';
+  DATES.forEach(function(d) {
+    var x = byDay[d];
+    if (!x.C.sp && !x.C.l && !x.C.i) return;
+    body += '<tr><td>' + fmtDate(d) + '</td>' + cells(x.G, true) + cells(x.M, true) + cells(x.C, true) + '</tr>';
+  });
+  if (!body) body = '<tr><td colspan="19" class="dim">No data for this brand</td></tr>';
+  else body += '<tr class="total"><td>Total</td>' + cells(tot.G, true) + cells(tot.M, true) + cells(tot.C, true) + '</tr>';
+  document.getElementById('tblDay').innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+
+// ── INIT ──
+(function() {
+  document.getElementById('buildTs').textContent = 'Last updated: ' + BUILD_TS;
+  if (DATES.length) {
+    document.getElementById('period').textContent =
+      'Google + Meta · ' + fmtDate(DATES[0]) + ' to ' + fmtDate(DATES[DATES.length - 1]) + ' · all amounts in SAR';
+  }
+
+  var sel = document.getElementById('brandSel');
+  sel.innerHTML = '<option value="__all">All brands</option>' +
+    BRANDS.map(function(b) { return '<option>' + b + '</option>'; }).join('');
+  sel.value = BRANDS[0] || '__all';
+  sel.addEventListener('change', renderDaywise);
+
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.toggle('active', b === btn); });
+      document.querySelectorAll('.tab').forEach(function(t) {
+        t.classList.toggle('active', t.id === 'tab-' + btn.dataset.tab);
+      });
+    });
+  });
+
+  renderSummary();
+  renderDaywise();
+})();
+</script>
+</body>
+</html>
