@@ -184,7 +184,8 @@ var TRIGGERS = {
 // Last day each brand's campaigns run this month, and the trigger target per brand.
 var CAMPAIGN_END = {'Changan': '2026-10-25', 'Peugeot': '2026-10-28', 'Deepal': '2026-10-28'};
 var DEFAULT_END = '2026-10-28';
-var TRIGGER_TARGET = 500;   // per brand
+var TRIGGER_TARGET = {'Changan': 500, 'Peugeot': 250, 'Deepal': 250};
+var DEFAULT_TARGET = 250;
 var GEN_UPLIFT = 0.50;      // final projected gen = projected gen + 50%
 var TRIGGER_RATE = 0.70;    // projected triggers = 70% of final projected generation
 
@@ -322,7 +323,7 @@ function projectBrand(b) {
   var projected = gen + yest * remaining;
   var final = projected * (1 + GEN_UPLIFT);
   return {brand: b, first: first, end: end, days: days, gen: gen, yest: yest, remaining: remaining,
-          projected: projected, final: final, triggers: final * TRIGGER_RATE, target: TRIGGER_TARGET};
+          projected: projected, final: final, triggers: final * TRIGGER_RATE, target: TRIGGER_TARGET[b] || DEFAULT_TARGET};
 }
 
 function pctCell(pct) {
@@ -366,7 +367,7 @@ function renderProjection() {
     tile('Yesterday’s Gen', fmt1(tot.yest), fmtDate(LAST_DATE) + ' · all brands') +
     tile('Final Projected Gen', fmtInt(tot.final), 'Projected ' + fmtInt(tot.projected) + ' + ' + uplift + '%') +
     tile('Projected Triggers', fmtInt(tot.triggers), rate + '% of final projected gen') +
-    tile('Target Triggers', fmtInt(tot.target), fmtInt(TRIGGER_TARGET) + ' per brand') +
+    tile('Target Triggers', fmtInt(tot.target), Object.keys(TRIGGER_TARGET).sort().map(function(b) { return b + ' ' + TRIGGER_TARGET[b]; }).join(' · ')) +
     tile('% Completion', (tpct * 100).toFixed(1) + '%', 'Projected / target triggers');
 
   document.getElementById('projNote').textContent =
