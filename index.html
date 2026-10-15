@@ -273,10 +273,8 @@ function renderTiles() {
     tile('Spends', fmtMoney(all.sp), 'Google + Meta') +
     tile('Panel Leads', fmtInt(all.l)) +
     tile('CPL', fmtCpl(all.sp, all.l)) +
-    tile('Impressions', fmtInt(all.i)) +
-    tile('Clicks', fmtInt(all.c)) +
-    tile('CTR %', fmtPct(all.c, all.i)) +
     tile('Triggered Leads', fmtInt(all.t)) +
+    tile('TCPL', fmtCpl(all.sp, all.t), 'Spends / Triggered leads') +
     tile('Trigger %', fmtPct(all.t, all.l), 'Triggered / Panel leads');
 }
 
@@ -290,11 +288,10 @@ function groupHead(firstCol, cols) {
 }
 
 // ── TAB 1: brand table ──
-var BRAND_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %', 'Triggers', 'TCPL', 'Trigger %'];
+var BRAND_COLS = ['Spends', 'Panel Leads', 'CPL', 'Triggers', 'TCPL', 'Trigger %'];
 
 function brandCells(a) {
   return '<td class="bl">' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' + fmtCpl(a.sp, a.l) +
-         '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) +
          '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtCpl(a.sp, a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td>';
 }
 
@@ -313,13 +310,9 @@ function renderBrandTable() {
 }
 
 // ── TAB 1: day-wise for the selected brand ──
-var DAY_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %', 'Triggers', 'TCPL', 'Trigger %'];
-
-function dayCells(a) {
-  return '<td class="bl">' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' +
-         fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) +
-         '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtCpl(a.sp, a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td>';
-}
+// Same KPI columns as the brand table.
+var DAY_COLS = BRAND_COLS;
+var dayCells = brandCells;
 
 function renderDaywise() {
   var brand = document.getElementById('brandSel').value;
@@ -341,10 +334,10 @@ function renderDaywise() {
   var body = '';
   DATES.forEach(function(d) {
     var x = byDay[d];
-    if (!x.C.sp && !x.C.l && !x.C.i && !x.C.t) return;
+    if (!x.C.sp && !x.C.l && !x.C.t) return;
     body += '<tr><td>' + fmtDate(d) + '</td>' + dayCells(x.C) + dayCells(x.G) + dayCells(x.M) + '</tr>';
   });
-  if (!body) body = '<tr><td colspan="28" class="dim">No data for this brand</td></tr>';
+  if (!body) body = '<tr><td colspan="19" class="dim">No data for this brand</td></tr>';
   else body += '<tr class="total"><td>Total</td>' + dayCells(tot.C) + dayCells(tot.G) + dayCells(tot.M) + '</tr>';
   document.getElementById('tblDay').innerHTML = groupHead('Date', DAY_COLS) + '<tbody>' + body + '</tbody>';
 }
