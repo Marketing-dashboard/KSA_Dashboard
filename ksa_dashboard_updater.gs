@@ -5,12 +5,11 @@
 // Reads:  Google    — Date | Campaign Name | Campaign Type | Impressions | Spends | Clicks | Conversions
 //         Meta      — Date | Campaign Name | Leads | Spend | Impressions | Clicks
 //         Reference — Campaign Name | Model (brand)
-//         Triggers  — optional: Brand | Source (Google/Meta) | Triggered Leads
-// Writes: the DATA_RAW / TRIGGERS / BUILD_TS blocks of index.html.
+//         Daywise Triggers — Day | Triggers | Model | Source (Google/Meta)
+// Writes: the DATA_RAW / TRIGGERS_RAW / BUILD_TS blocks of index.html.
 //
 // Brand = Reference lookup by campaign name; if missing, the 2nd part of the name
-// (KSA-<Brand>-...). If the sheet has no "Triggers" tab, the trigger counts already in
-// index.html are kept as they are.
+// (KSA-<Brand>-...). The dashboard only counts trigger days inside its own date range.
 //
 // Every global is prefixed KSAD_ so this file can share the sheet's Apps Script project
 // with other scripts.
@@ -71,7 +70,7 @@ function KSAD_update() {
     return '  [' + JSON.stringify(r[0]) + ',' + JSON.stringify(r[1]) + ',' + JSON.stringify(r[2]) + ',' +
            JSON.stringify(r[3]) + ',' + KSAD_round_(r[4]) + ',' + KSAD_round_(r[5]) + ',' + r[6] + ',' + r[7] + ']';
   }).join(',\n') + '\n];';
-  var trigBlock = KSAD_triggersBlock_(ss);
+  var trigBlock = KSAD_triggersBlock_(ss, tz, rows[rows.length - 1][0].slice(0, 4));
 
   // Read the current file, swap the data blocks, write it back.
   var api = 'https://api.github.com/repos/' + KSAD_OWNER + '/' + KSAD_REPO + '/contents/' + KSAD_FILE;
@@ -83,7 +82,7 @@ function KSAD_update() {
   if (html.indexOf('var DATA_RAW = [') === -1) throw new Error('DATA_RAW block missing in ' + KSAD_FILE + '; not updated.');
 
   html = KSAD_replace_(html, 'var DATA_RAW = [', '];', dataBlock);
-  if (trigBlock) html = KSAD_replace_(html, 'var TRIGGERS = {', '};', trigBlock);
+  html = KSAD_replace_(html, '// Triggered leads by day:', '];', trigBlock);
   html = html.replace(/var BUILD_TS = '[^']*';/,
     "var BUILD_TS = '" + Utilities.formatDate(new Date(), KSAD_TZ, 'yyyy-MM-dd HH:mm') + " IST';");
 
@@ -96,8 +95,7 @@ function KSAD_update() {
     })
   });
   if (put.getResponseCode() >= 300) throw new Error('GitHub write failed: HTTP ' + put.getResponseCode() + ' ' + put.getContentText().slice(0, 200));
-  Logger.log('Pushed ' + rows.length + ' rows (' + rows[0][0] + ' → ' + rows[rows.length - 1][0] + ')' +
-             (trigBlock ? ', triggers from sheet' : ', triggers unchanged') + '.');
+  Logger.log('Pushed ' + rows.length + ' rows (' + rows[0][0] + ' → ' + rows[rows.length - 1][0] + ') + triggers.');
 }
 
 // Rows of a tab without the header; [] if the tab doesn't exist.
@@ -123,20 +121,22 @@ function KSAD_brandMap_(ss) {
   };
 }
 
-// Triggers tab (Brand | Source | Triggered Leads) → TRIGGERS block, or null if no tab.
-function KSAD_triggersBlock_(ss) {
-  if (!ss.getSheetByName('Triggers')) return null;
-  var t = {};
-  KSAD_values_(ss, 'Triggers').forEach(function(r) {
-    var b = String(r[0] || '').trim(), s = String(r[1] || '').trim().toLowerCase();
-    if (!b) return;
-    var key = s.indexOf('meta') === 0 || s.indexOf('facebook') === 0 || s === 'fb' ? 'M' : 'G';
-    t[b] = t[b] || {G: 0, M: 0};
-    t[b][key] += KSAD_num_(r[2]);
+// Daywise Triggers tab (Day | Triggers | Model | Source) → TRIGGERS_RAW block,
+// [date, source G/M, brand, triggers]. Rows with a blank / zero count are skipped.
+// A day without a year (e.g. "30-Sep" kept as text) takes the year of defaultYear.
+function KSAD_triggersBlock_(ss, tz, defaultYear) {
+  var rows = [];
+  KSAD_values_(ss, 'Daywise Triggers').forEach(function(r) {
+    var d = KSAD_date_(r[0], tz, defaultYear), n = KSAD_num_(r[1]), b = String(r[2] || '').trim();
+    var s = String(r[3] || '').trim().toLowerCase();
+    if (!d || !b || !n) return;
+    var src = s.indexOf('meta') === 0 || s.indexOf('facebook') === 0 || s === 'fb' ? 'M' : 'G';
+    rows.push([d, src, b, n]);
   });
-  return 'var TRIGGERS = {\n' + Object.keys(t).sort().map(function(b) {
-    return '  ' + JSON.stringify(b) + ': {G: ' + t[b].G + ', M: ' + t[b].M + '}';
-  }).join(',\n') + '\n};';
+  rows.sort(function(a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[2] < b[2] ? -1 : a[2] > b[2] ? 1 : 0; });
+  return '// Triggered leads by day: [date, source G/M, brand, triggers]\nvar TRIGGERS_RAW = [\n' + rows.map(function(r) {
+    return '  [' + JSON.stringify(r[0]) + ',' + JSON.stringify(r[1]) + ',' + JSON.stringify(r[2]) + ',' + r[3] + ']';
+  }).join(',\n') + '\n];';
 }
 
 function KSAD_replace_(html, startMarker, endMarker, block) {
@@ -149,14 +149,16 @@ function KSAD_replace_(html, startMarker, endMarker, block) {
 
 var KSAD_MONTHS = {jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12};
 
-// Date cell → 'yyyy-MM-dd' (Date objects, 13-Oct-2026, 10/13/2026, 2026-10-13).
-function KSAD_date_(v, tz) {
+// Date cell → 'yyyy-MM-dd' (Date objects, 13-Oct-2026, 13-Oct, 10/13/2026, 2026-10-13).
+function KSAD_date_(v, tz, defaultYear) {
   if (v instanceof Date) return Utilities.formatDate(v, tz, 'yyyy-MM-dd');
   var s = String(v || '').trim(), m;
   if (!s) return '';
   if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return m[1] + '-' + m[2] + '-' + m[3];
   if ((m = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/)) && KSAD_MONTHS[m[2].toLowerCase()])
     return m[3] + '-' + ('0' + KSAD_MONTHS[m[2].toLowerCase()]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  if (defaultYear && (m = s.match(/^(\d{1,2})-([A-Za-z]{3})$/)) && KSAD_MONTHS[m[2].toLowerCase()])
+    return defaultYear + '-' + ('0' + KSAD_MONTHS[m[2].toLowerCase()]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
   if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)))
     return m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2);
   return '';

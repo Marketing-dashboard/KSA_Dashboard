@@ -119,65 +119,97 @@ th.grp.c{background:#dcfce7;color:#15803d}
 <script>
 // ═══ DATA (rewritten by the Apps Script) ═══
 // [date, source G/M, brand, campaign, spends SAR, leads, impressions, clicks]
-var BUILD_TS = '2026-10-14 10:00 IST';
+var BUILD_TS = '2026-10-15 IST';
 var DATA_RAW = [
-  ['2026-10-01','G','Peugeot','KSA-Peugeot-Search-Arabic',113.04,6,263,34],
-  ['2026-10-01','G','Peugeot','KSA-Peugeot-Search-Oct-26',9.05,0,22,3],
-  ['2026-10-02','G','Peugeot','KSA-Peugeot-Search-Arabic',138.58,5,512,56],
-  ['2026-10-02','G','Peugeot','KSA-Peugeot-Search-Oct-26',2.48,0,21,1],
-  ['2026-10-03','G','Peugeot','KSA-Peugeot-Search-Arabic',205.89,5,537,57],
-  ['2026-10-03','G','Peugeot','KSA-Peugeot-Search-Oct-26',10.12,0,69,5],
-  ['2026-10-04','G','Peugeot','KSA-Peugeot-Search-Arabic',158.44,9,443,50],
-  ['2026-10-04','G','Peugeot','KSA-Peugeot-Search-Oct-26',94.92,2,267,37],
-  ['2026-10-05','G','Peugeot','KSA-Peugeot-Search-Arabic',148.57,7,381,63],
-  ['2026-10-05','G','Peugeot','KSA-Peugeot-Search-Oct-26',100,1,160,23],
-  ['2026-10-06','G','Peugeot','KSA-Peugeot-Search-Arabic',152.96,8,399,72],
-  ['2026-10-06','G','Peugeot','KSA-Peugeot-Search-Oct-26',53.05,1,97,21],
-  ['2026-10-07','G','Changan','KSA-Changan-Search-Arabic',100.95,2.01,759,67],
-  ['2026-10-07','G','Deepal','KSA-Deepal-Search-Arabic',102.13,0,204,35],
-  ['2026-10-07','G','Peugeot','KSA-Peugeot-Search-Arabic',151.74,4,455,67],
-  ['2026-10-07','G','Peugeot','KSA-Peugeot-Search-Oct-26',52.01,1,57,14],
-  ['2026-10-08','G','Changan','KSA-Changan-Search-Arabic',103.54,7,1584,103],
-  ['2026-10-08','G','Deepal','KSA-Deepal-Search-Arabic',104.7,3,529,73],
-  ['2026-10-08','G','Peugeot','KSA-Peugeot-Search-Arabic',151.56,7.33,531,94],
-  ['2026-10-08','G','Peugeot','KSA-Peugeot-Search-Oct-26',50.88,0.67,273,25],
-  ['2026-10-09','G','Changan','KSA-Changan-Search',101.31,4,281,46],
-  ['2026-10-09','G','Changan','KSA-Changan-Search-Arabic',151.4,9.49,1883,145],
-  ['2026-10-09','G','Deepal','KSA-Deepal-Search-Arabic',103.4,4,797,104],
-  ['2026-10-09','G','Peugeot','KSA-Peugeot-Search-Arabic',154.68,6,459,101],
-  ['2026-10-09','G','Peugeot','KSA-Peugeot-Search-Oct-26',54.82,1,164,23],
-  ['2026-10-10','G','Changan','KSA-Changan-Search',104.91,7,413,52],
-  ['2026-10-10','G','Changan','KSA-Changan-Search-Arabic',247.3,9.5,2632,197],
-  ['2026-10-10','G','Deepal','KSA-Deepal-Search-Arabic',103.31,5,718,79],
-  ['2026-10-10','G','Peugeot','KSA-Peugeot-Search-Arabic',150.93,5,533,94],
-  ['2026-10-10','G','Peugeot','KSA-Peugeot-Search-Oct-26',50.88,2,127,20],
-  ['2026-10-11','G','Changan','KSA-Changan-Search',102.82,2,273,41],
-  ['2026-10-11','G','Changan','KSA-Changan-Search-Arabic',265.02,15,2902,191],
-  ['2026-10-11','G','Deepal','KSA-Deepal-Search-Arabic',104.46,7,980,98],
-  ['2026-10-11','G','Peugeot','KSA-Peugeot-Search-Arabic',150.28,4,462,86],
-  ['2026-10-11','G','Peugeot','KSA-Peugeot-Search-Oct-26',33.23,0,140,11],
-  ['2026-10-12','G','Changan','KSA-Changan-Search',105.32,6,476,60],
-  ['2026-10-12','G','Changan','KSA-Changan-Search-Arabic',296.81,15.5,2420,187],
-  ['2026-10-12','G','Deepal','KSA-Deepal-Search-Arabic',103.9,4,1152,76],
-  ['2026-10-12','G','Peugeot','KSA-Peugeot-Search-Arabic',147.79,8.5,606,80],
-  ['2026-10-12','G','Peugeot','KSA-Peugeot-Search-Oct-26',66.77,1.5,156,21],
-  ['2026-10-13','G','Changan','KSA-Changan-DG-Arabic',25.13,0,5758,41],
-  ['2026-10-13','G','Changan','KSA-Changan-Search',103.92,3,360,46],
-  ['2026-10-13','G','Changan','KSA-Changan-Search-Arabic',318.52,13.5,2191,183],
-  ['2026-10-13','G','Deepal','KSA-Deepal-DG-Arabic',101.4,1,20249,184],
-  ['2026-10-13','G','Deepal','KSA-Deepal-Search-Arabic',103.91,5,2434,79],
-  ['2026-10-13','G','Peugeot','KSA-Peugeot-Search-Arabic',204.64,5,994,119],
-  ['2026-10-13','G','Peugeot','KSA-Peugeot-Search-Oct-26',69.48,1,237,21],
-  ['2026-10-12','M','Changan','KSA-Changan-Meta-Lead-Form',30.23,5,1697,39],
-  ['2026-10-13','M','Changan','KSA-Changan-Meta-Lead-Form',134.93,7,5295,79],
-  ['2026-10-13','M','Deepal','KSA-Deepal-Meta-Lead-Form',58.01,4,2574,51]
+  ["2026-10-01","G","Peugeot","KSA-Peugeot-Search-Arabic",113.04,6,263,34],
+  ["2026-10-01","G","Peugeot","KSA-Peugeot-Search-Oct-26",9.05,0,22,3],
+  ["2026-10-02","G","Peugeot","KSA-Peugeot-Search-Arabic",138.58,5,512,56],
+  ["2026-10-02","G","Peugeot","KSA-Peugeot-Search-Oct-26",2.48,0,21,1],
+  ["2026-10-03","G","Peugeot","KSA-Peugeot-Search-Arabic",205.89,5,537,57],
+  ["2026-10-03","G","Peugeot","KSA-Peugeot-Search-Oct-26",10.12,0,69,5],
+  ["2026-10-04","G","Peugeot","KSA-Peugeot-Search-Arabic",158.44,9,443,50],
+  ["2026-10-04","G","Peugeot","KSA-Peugeot-Search-Oct-26",94.92,2,267,37],
+  ["2026-10-05","G","Peugeot","KSA-Peugeot-Search-Arabic",148.57,7,381,63],
+  ["2026-10-05","G","Peugeot","KSA-Peugeot-Search-Oct-26",100,1,160,23],
+  ["2026-10-06","G","Peugeot","KSA-Peugeot-Search-Arabic",152.96,8,399,72],
+  ["2026-10-06","G","Peugeot","KSA-Peugeot-Search-Oct-26",53.05,1,97,21],
+  ["2026-10-07","G","Changan","KSA-Changan-Search-Arabic",100.95,2.01,759,67],
+  ["2026-10-07","G","Deepal","KSA-Deepal-Search-Arabic",102.13,0,204,35],
+  ["2026-10-07","G","Peugeot","KSA-Peugeot-Search-Arabic",151.74,4,455,67],
+  ["2026-10-07","G","Peugeot","KSA-Peugeot-Search-Oct-26",52.01,1,57,14],
+  ["2026-10-08","G","Changan","KSA-Changan-Search-Arabic",103.54,7,1584,103],
+  ["2026-10-08","G","Deepal","KSA-Deepal-Search-Arabic",104.7,3,529,73],
+  ["2026-10-08","G","Peugeot","KSA-Peugeot-Search-Arabic",151.56,7.33,531,94],
+  ["2026-10-08","G","Peugeot","KSA-Peugeot-Search-Oct-26",50.88,0.67,273,25],
+  ["2026-10-09","G","Changan","KSA-Changan-Search",101.31,4,281,46],
+  ["2026-10-09","G","Changan","KSA-Changan-Search-Arabic",151.4,9.49,1883,145],
+  ["2026-10-09","G","Deepal","KSA-Deepal-Search-Arabic",103.4,4,797,104],
+  ["2026-10-09","G","Peugeot","KSA-Peugeot-Search-Arabic",154.68,6,459,101],
+  ["2026-10-09","G","Peugeot","KSA-Peugeot-Search-Oct-26",54.82,1,164,23],
+  ["2026-10-10","G","Changan","KSA-Changan-Search",104.91,7,413,52],
+  ["2026-10-10","G","Changan","KSA-Changan-Search-Arabic",247.3,9.5,2632,197],
+  ["2026-10-10","G","Deepal","KSA-Deepal-Search-Arabic",103.31,5,718,79],
+  ["2026-10-10","G","Peugeot","KSA-Peugeot-Search-Arabic",150.93,5,533,94],
+  ["2026-10-10","G","Peugeot","KSA-Peugeot-Search-Oct-26",50.88,2,127,20],
+  ["2026-10-11","G","Changan","KSA-Changan-Search",102.82,2,273,41],
+  ["2026-10-11","G","Changan","KSA-Changan-Search-Arabic",265.02,15,2902,191],
+  ["2026-10-11","G","Deepal","KSA-Deepal-Search-Arabic",104.46,7,980,98],
+  ["2026-10-11","G","Peugeot","KSA-Peugeot-Search-Arabic",150.28,4,462,86],
+  ["2026-10-11","G","Peugeot","KSA-Peugeot-Search-Oct-26",33.23,0,140,11],
+  ["2026-10-12","G","Changan","KSA-Changan-Search",105.32,6,476,60],
+  ["2026-10-12","G","Changan","KSA-Changan-Search-Arabic",296.81,15.5,2420,187],
+  ["2026-10-12","G","Deepal","KSA-Deepal-Search-Arabic",103.9,4,1152,76],
+  ["2026-10-12","G","Peugeot","KSA-Peugeot-Search-Arabic",147.79,8.5,606,80],
+  ["2026-10-12","G","Peugeot","KSA-Peugeot-Search-Oct-26",66.77,1.5,156,21],
+  ["2026-10-12","M","Changan","KSA-Changan-Meta-Lead-Form",30.23,5,1697,39],
+  ["2026-10-13","G","Changan","KSA-Changan-DG-Arabic",25.13,0,5761,41],
+  ["2026-10-13","G","Changan","KSA-Changan-Search",103.92,3,360,46],
+  ["2026-10-13","G","Changan","KSA-Changan-Search-Arabic",318.52,13.75,2191,183],
+  ["2026-10-13","G","Deepal","KSA-Deepal-DG-Arabic",101.4,2,20249,184],
+  ["2026-10-13","G","Deepal","KSA-Deepal-Search-Arabic",103.91,5,2434,79],
+  ["2026-10-13","G","Peugeot","KSA-Peugeot-Search-Arabic",204.64,5.33,994,119],
+  ["2026-10-13","G","Peugeot","KSA-Peugeot-Search-Oct-26",69.48,1.5,237,21],
+  ["2026-10-13","M","Changan","KSA-Changan-Meta-Lead-Form",134.93,7,5295,79],
+  ["2026-10-13","M","Deepal","KSA-Deepal-Meta-Lead-Form",58.01,4,2574,51],
+  ["2026-10-14","G","Changan","KSA-Changan-DG-Arabic",184.8,1,5562,64],
+  ["2026-10-14","G","Changan","KSA-Changan-Search",104.06,2.5,335,48],
+  ["2026-10-14","G","Changan","KSA-Changan-Search-Arabic",313.9,10.75,2589,203],
+  ["2026-10-14","G","Deepal","KSA-Deepal-DG-Arabic",103.58,0,11849,70],
+  ["2026-10-14","G","Deepal","KSA-Deepal-Search-Arabic",104.1,3,2391,84],
+  ["2026-10-14","G","Peugeot","KSA-Peugeot-Search-Arabic",157.23,14.67,927,87],
+  ["2026-10-14","G","Peugeot","KSA-Peugeot-Search-Oct-26",55.94,1,121,22],
+  ["2026-10-14","M","Changan","KSA-Changan-Meta-Lead-Form",119.91,12,3275,76],
+  ["2026-10-14","M","Deepal","KSA-Deepal-Meta-Lead-Form",69.89,6,2192,71],
+  ["2026-10-14","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",0.07,0,13,0]
 ];
-// Triggered leads by brand and source (G = Google, M = Meta)
-var TRIGGERS = {
-  'Peugeot': {G: 72, M: 0},
-  'Changan': {G: 59, M: 0},
-  'Deepal':  {G: 0,  M: 0}
-};
+// Triggered leads by day: [date, source G/M, brand, triggers]
+var TRIGGERS_RAW = [
+  ["2026-09-30","G","Changan",1],
+  ["2026-09-30","G","Peugeot",2],
+  ["2026-10-01","G","Peugeot",3],
+  ["2026-10-02","G","Changan",1],
+  ["2026-10-02","G","Peugeot",6],
+  ["2026-10-03","G","Peugeot",3],
+  ["2026-10-04","G","Peugeot",10],
+  ["2026-10-05","G","Peugeot",9],
+  ["2026-10-06","G","Peugeot",8],
+  ["2026-10-07","G","Changan",2],
+  ["2026-10-07","G","Peugeot",2],
+  ["2026-10-08","G","Changan",5],
+  ["2026-10-08","G","Peugeot",7],
+  ["2026-10-09","G","Changan",11],
+  ["2026-10-09","G","Peugeot",10],
+  ["2026-10-10","G","Changan",11],
+  ["2026-10-10","G","Peugeot",6],
+  ["2026-10-11","G","Changan",13],
+  ["2026-10-11","G","Peugeot",3],
+  ["2026-10-12","G","Changan",19],
+  ["2026-10-12","G","Peugeot",7],
+  ["2026-10-13","G","Changan",15],
+  ["2026-10-13","G","Peugeot",6],
+  ["2026-10-14","G","Changan",11],
+  ["2026-10-14","G","Peugeot",6]
+];
 // ═══ END DATA ═══
 
 // ═══ PROJECTION SETTINGS (edit by hand) ═══
@@ -200,12 +232,19 @@ function fmtInt(v) { return Math.round(v).toLocaleString('en-US'); }
 function fmt1(v) { return v.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
 function fmtPct(n, d) { return d ? (n / d * 100).toFixed(2) + '%' : DASH; }
 function fmtCpl(sp, l) { return l ? fmtMoney(sp / l) : DASH; }
-function trig(brand, src) { var t = TRIGGERS[brand]; return t ? (src ? t[src] || 0 : (t.G || 0) + (t.M || 0)) : 0; }
+// Triggers for a brand (and source), counting only days inside the dashboard's date range.
+function trig(brand, src) {
+  var n = 0;
+  TRIGGERS_RAW.forEach(function(r) {
+    if (r[2] === brand && (!src || r[1] === src) && r[0] >= DATES[0] && r[0] <= LAST_DATE) n += r[3];
+  });
+  return n;
+}
 
 var BRANDS = (function() {
   var s = {};
   DATA_RAW.forEach(function(r) { s[r[2]] = true; });
-  Object.keys(TRIGGERS).forEach(function(b) { s[b] = true; });
+  TRIGGERS_RAW.forEach(function(r) { s[r[2]] = true; });
   return Object.keys(s).sort();
 })();
 var DATES = (function() {
@@ -251,12 +290,12 @@ function groupHead(firstCol, cols) {
 }
 
 // ── TAB 1: brand table ──
-var BRAND_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %', 'Triggered Leads', 'Trigger %'];
+var BRAND_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %', 'Triggers', 'TCPL', 'Trigger %'];
 
 function brandCells(a) {
   return '<td class="bl">' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' + fmtCpl(a.sp, a.l) +
          '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) +
-         '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td>';
+         '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtCpl(a.sp, a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td>';
 }
 
 function renderBrandTable() {
@@ -274,11 +313,12 @@ function renderBrandTable() {
 }
 
 // ── TAB 1: day-wise for the selected brand ──
-var DAY_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %'];
+var DAY_COLS = ['Spends', 'Panel Leads', 'CPL', 'Impressions', 'Clicks', 'CTR %', 'Triggers', 'TCPL', 'Trigger %'];
 
 function dayCells(a) {
   return '<td class="bl">' + fmtMoney(a.sp) + '</td><td>' + fmtInt(a.l) + '</td><td>' +
-         fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) + '</td>';
+         fmtCpl(a.sp, a.l) + '</td><td>' + fmtInt(a.i) + '</td><td>' + fmtInt(a.c) + '</td><td>' + fmtPct(a.c, a.i) +
+         '</td><td>' + fmtInt(a.t) + '</td><td>' + fmtCpl(a.sp, a.t) + '</td><td>' + fmtPct(a.t, a.l) + '</td>';
 }
 
 function renderDaywise() {
@@ -290,16 +330,21 @@ function renderDaywise() {
     add(byDay[r[0]][r[1]], r); add(byDay[r[0]].C, r);
     add(tot[r[1]], r); add(tot.C, r);
   });
+  TRIGGERS_RAW.forEach(function(r) {
+    if ((brand !== '__all' && r[2] !== brand) || !byDay[r[0]]) return;
+    byDay[r[0]][r[1]].t += r[3]; byDay[r[0]].C.t += r[3];
+    tot[r[1]].t += r[3]; tot.C.t += r[3];
+  });
 
   document.getElementById('dayTitle').textContent = 'Day-wise · ' + (brand === '__all' ? 'All brands' : brand);
 
   var body = '';
   DATES.forEach(function(d) {
     var x = byDay[d];
-    if (!x.C.sp && !x.C.l && !x.C.i) return;
+    if (!x.C.sp && !x.C.l && !x.C.i && !x.C.t) return;
     body += '<tr><td>' + fmtDate(d) + '</td>' + dayCells(x.C) + dayCells(x.G) + dayCells(x.M) + '</tr>';
   });
-  if (!body) body = '<tr><td colspan="19" class="dim">No data for this brand</td></tr>';
+  if (!body) body = '<tr><td colspan="28" class="dim">No data for this brand</td></tr>';
   else body += '<tr class="total"><td>Total</td>' + dayCells(tot.C) + dayCells(tot.G) + dayCells(tot.M) + '</tr>';
   document.getElementById('tblDay').innerHTML = groupHead('Date', DAY_COLS) + '<tbody>' + body + '</tbody>';
 }
