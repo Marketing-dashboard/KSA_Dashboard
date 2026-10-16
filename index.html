@@ -228,8 +228,7 @@ var CAMPAIGN_END = {'Changan': '2026-10-25', 'Peugeot': '2026-10-28', 'Deepal': 
 var DEFAULT_END = '2026-10-28';
 var TRIGGER_TARGET = {'Changan': 500, 'Peugeot': 250, 'Deepal': 250};
 var DEFAULT_TARGET = 250;
-var GEN_UPLIFT = 0.50;      // final projected gen = projected gen + 50%
-var TRIGGER_RATE = 0.70;    // projected triggers = 70% of final projected generation
+var TRIGGER_RATE = 0.70;    // projected triggers = 70% of projected generation
 
 var DASH = '<span class="dim">—</span>';
 
@@ -356,7 +355,6 @@ function renderDaywise() {
 // Days running = first date with spend for the brand → last data date (inclusive).
 // Remaining days = last data date → the brand's campaign end date.
 // Projected gen = gen till date + yesterday's (last data day's) gen × remaining days.
-// Final projected gen = projected gen + GEN_UPLIFT (40%) of it.
 function projectBrand(b) {
   var gen = 0, yest = 0, first = null;
   DATA_RAW.forEach(function(r) {
@@ -369,9 +367,8 @@ function projectBrand(b) {
   var days = first ? dayNum(LAST_DATE) - dayNum(first) + 1 : 0;
   var remaining = Math.max(0, dayNum(end) - dayNum(LAST_DATE));
   var projected = gen + yest * remaining;
-  var final = projected * (1 + GEN_UPLIFT);
   return {brand: b, first: first, end: end, days: days, gen: gen, yest: yest, remaining: remaining,
-          projected: projected, final: final, triggers: final * TRIGGER_RATE, target: TRIGGER_TARGET[b] || DEFAULT_TARGET};
+          projected: projected, triggers: projected * TRIGGER_RATE, target: TRIGGER_TARGET[b] || DEFAULT_TARGET};
 }
 
 function pctCell(pct) {
@@ -381,10 +378,10 @@ function pctCell(pct) {
 }
 
 function renderProjection() {
-  var rate = Math.round(TRIGGER_RATE * 100), uplift = Math.round(GEN_UPLIFT * 100);
-  var tot = {gen: 0, yest: 0, projected: 0, final: 0, triggers: 0, target: 0};
+  var rate = Math.round(TRIGGER_RATE * 100);
+  var tot = {gen: 0, yest: 0, projected: 0, triggers: 0, target: 0};
   var body = BRANDS.map(projectBrand).map(function(p) {
-    tot.gen += p.gen; tot.yest += p.yest; tot.projected += p.projected; tot.final += p.final; tot.triggers += p.triggers; tot.target += p.target;
+    tot.gen += p.gen; tot.yest += p.yest; tot.projected += p.projected; tot.triggers += p.triggers; tot.target += p.target;
     return '<tr><td>' + p.brand + '</td>' +
       '<td>' + (p.first ? fmtShort(p.first) : DASH) + '</td>' +
       '<td>' + fmtShort(p.end) + '</td>' +
@@ -392,36 +389,34 @@ function renderProjection() {
       '<td>' + fmtInt(p.gen) + '</td>' +
       '<td>' + fmt1(p.yest) + '</td>' +
       '<td>' + p.remaining + '</td>' +
-      '<td class="bl">' + fmtInt(p.projected) + '</td>' +
-      '<td><b>' + fmtInt(p.final) + '</b></td>' +
+      '<td class="bl"><b>' + fmtInt(p.projected) + '</b></td>' +
       '<td>' + fmtInt(p.triggers) + '</td>' +
       '<td>' + fmtInt(p.target) + '</td>' +
       pctCell(p.target ? p.triggers / p.target : 0) + '</tr>';
   }).join('');
   var tpct = tot.target ? tot.triggers / tot.target : 0;
   body += '<tr class="total"><td>Total</td><td></td><td></td><td></td><td>' + fmtInt(tot.gen) + '</td><td>' + fmt1(tot.yest) +
-    '</td><td></td><td class="bl">' + fmtInt(tot.projected) + '</td><td>' + fmtInt(tot.final) + '</td><td>' + fmtInt(tot.triggers) + '</td><td>' +
+    '</td><td></td><td class="bl">' + fmtInt(tot.projected) + '</td><td>' + fmtInt(tot.triggers) + '</td><td>' +
     fmtInt(tot.target) + '</td>' + pctCell(tpct) + '</tr>';
 
   document.getElementById('tblProj').innerHTML =
     '<thead><tr><th>Brand</th><th>Start</th><th>End</th><th>Days Running</th><th>Gen Till Date</th>' +
     '<th>Yesterday’s Gen (' + fmtShort(LAST_DATE) + ')</th><th>Remaining Days</th><th class="bl">Projected Gen</th>' +
-    '<th>Final Projected Gen (+' + uplift + '%)</th>' +
     '<th>Projected Triggers (' + rate + '%)</th><th>Target Triggers</th><th>% Completion</th></tr></thead>' +
     '<tbody>' + body + '</tbody>';
 
   document.getElementById('projTiles').innerHTML =
     tile('Gen Till Date', fmtInt(tot.gen), 'up to ' + fmtDate(LAST_DATE)) +
     tile('Yesterday’s Gen', fmt1(tot.yest), fmtDate(LAST_DATE) + ' · all brands') +
-    tile('Final Projected Gen', fmtInt(tot.final), 'Projected ' + fmtInt(tot.projected) + ' + ' + uplift + '%') +
-    tile('Projected Triggers', fmtInt(tot.triggers), rate + '% of final projected gen') +
+    tile('Projected Month-end Gen', fmtInt(tot.projected), 'on yesterday’s gen') +
+    tile('Projected Triggers', fmtInt(tot.triggers), rate + '% of projected gen') +
     tile('Target Triggers', fmtInt(tot.target), Object.keys(TRIGGER_TARGET).sort().map(function(b) { return b + ' ' + TRIGGER_TARGET[b]; }).join(' · ')) +
     tile('% Completion', (tpct * 100).toFixed(1) + '%', 'Projected / target triggers');
 
   document.getElementById('projNote').textContent =
     'Gen = panel leads (Google conversions + Meta leads). Days running = first day with spend → ' + fmtShort(LAST_DATE) +
     ' (last data day). Remaining days = after ' + fmtShort(LAST_DATE) + ' → campaign end date. ' +
-    'Projected gen = Gen till date + Yesterday’s gen (' + fmtShort(LAST_DATE) + ') × Remaining days. Final projected gen = Projected gen + ' + uplift + '%. Projected triggers = ' + rate + '% of final projected gen.';
+    'Projected gen = Gen till date + Yesterday’s gen (' + fmtShort(LAST_DATE) + ') × Remaining days. Projected triggers = ' + rate + '% of projected gen. % Completion = Projected triggers / Target triggers.';
 }
 
 // ── INIT ──
