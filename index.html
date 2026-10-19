@@ -119,7 +119,7 @@ th.grp.c{background:#dcfce7;color:#15803d}
 <script>
 // ═══ DATA (rewritten by the Apps Script) ═══
 // [date, source G/M, brand, campaign, spends SAR, leads, impressions, clicks]
-var BUILD_TS = '2026-10-16 IST';
+var BUILD_TS = '2026-10-19 IST';
 var DATA_RAW = [
   ["2026-10-01","G","Peugeot","KSA-Peugeot-Search-Arabic",113.04,6,263,34],
   ["2026-10-01","G","Peugeot","KSA-Peugeot-Search-Oct-26",9.05,0,22,3],
@@ -181,16 +181,46 @@ var DATA_RAW = [
   ["2026-10-14","M","Changan","KSA-Changan-Meta-Lead-Form",119.91,12,3275,76],
   ["2026-10-14","M","Deepal","KSA-Deepal-Meta-Lead-Form",69.89,6,2192,71],
   ["2026-10-14","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",0.07,0,13,0],
-  ["2026-10-15","G","Changan","KSA-Changan-DG-Arabic",85.45,2,6708,79],
+  ["2026-10-15","G","Changan","KSA-Changan-DG-Arabic",85.45,3,6708,79],
   ["2026-10-15","G","Changan","KSA-Changan-Search",105.14,7,292,55],
-  ["2026-10-15","G","Changan","KSA-Changan-Search-Arabic",348.98,16.7,2867,251],
+  ["2026-10-15","G","Changan","KSA-Changan-Search-Arabic",349.31,16.7,2867,252],
   ["2026-10-15","G","Deepal","KSA-Deepal-DG-Arabic",81.61,1,11390,157],
   ["2026-10-15","G","Deepal","KSA-Deepal-Search-Arabic",101.73,2,2414,91],
   ["2026-10-15","G","Peugeot","KSA-Peugeot-Search-Arabic",281.45,7,983,145],
   ["2026-10-15","G","Peugeot","KSA-Peugeot-Search-Oct-26",55.43,3,201,24],
   ["2026-10-15","M","Changan","KSA-Changan-Meta-Lead-Form",321,18,6857,143],
   ["2026-10-15","M","Deepal","KSA-Deepal-Meta-Lead-Form",264,25,8966,253],
-  ["2026-10-15","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",249.15,28,16743,267]
+  ["2026-10-15","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",249.15,28,16743,267],
+  ["2026-10-16","G","Changan","KSA-Changan-DG-Arabic",20.96,1,3430,37],
+  ["2026-10-16","G","Changan","KSA-Changan-Search",102.88,5,491,59],
+  ["2026-10-16","G","Changan","KSA-Changan-Search-Arabic",375.52,11,3482,258],
+  ["2026-10-16","G","Deepal","KSA-Deepal-DG-Arabic",20.97,1,3499,37],
+  ["2026-10-16","G","Deepal","KSA-Deepal-Search-Arabic",105.85,4,2414,115],
+  ["2026-10-16","G","Peugeot","KSA-Peugeot-Search-Arabic",171.86,5,476,86],
+  ["2026-10-16","G","Peugeot","KSA-Peugeot-Search-Oct-26",46.21,3,231,19],
+  ["2026-10-16","M","Changan","KSA-Changan-Meta-Lead-Form",422.79,29,11696,243],
+  ["2026-10-16","M","Deepal","KSA-Deepal-Meta-Lead-Form",216.21,16,7981,279],
+  ["2026-10-16","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",149.88,23,11160,168],
+  ["2026-10-17","G","Changan","KSA-Changan-DG-Arabic",20.94,1,2574,19],
+  ["2026-10-17","G","Changan","KSA-Changan-Search",95.81,3.33,386,52],
+  ["2026-10-17","G","Changan","KSA-Changan-Search-Arabic",363.35,13,2571,255],
+  ["2026-10-17","G","Deepal","KSA-Deepal-DG-Arabic",21.06,2,2844,28],
+  ["2026-10-17","G","Deepal","KSA-Deepal-Search-Arabic",102.23,5,2242,127],
+  ["2026-10-17","G","Peugeot","KSA-Peugeot-Search-Arabic",134.16,8.17,513,114],
+  ["2026-10-17","G","Peugeot","KSA-Peugeot-Search-Oct-26",43.16,1,261,17],
+  ["2026-10-17","M","Changan","KSA-Changan-Meta-Lead-Form",349.2,21,10108,171],
+  ["2026-10-17","M","Deepal","KSA-Deepal-Meta-Lead-Form",188.51,13,7646,216],
+  ["2026-10-17","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",39.65,9,3033,74],
+  ["2026-10-18","G","Changan","KSA-Changan-DG-Arabic",20.81,2,2817,21],
+  ["2026-10-18","G","Changan","KSA-Changan-Search",99.47,4,401,62],
+  ["2026-10-18","G","Changan","KSA-Changan-Search-Arabic",339.01,15.5,3194,227],
+  ["2026-10-18","G","Deepal","KSA-Deepal-DG-Arabic",20.86,0,2620,27],
+  ["2026-10-18","G","Deepal","KSA-Deepal-Search-Arabic",88.68,5,1809,89],
+  ["2026-10-18","G","Peugeot","KSA-Peugeot-Search-Arabic",49.31,2,345,65],
+  ["2026-10-18","G","Peugeot","KSA-Peugeot-Search-Oct-26",8.21,0,46,3],
+  ["2026-10-18","M","Changan","KSA-Changan-Meta-Lead-Form",459.9,37,16689,289],
+  ["2026-10-18","M","Deepal","KSA-Deepal-Meta-Lead-Form",317.24,29,11904,341],
+  ["2026-10-18","M","Peugeot","KSA-Peugeot-Meta-Lead-Form",56.89,13,5373,89]
 ];
 // Triggered leads by day: [date, source G/M, brand, triggers]
 var TRIGGERS_RAW = [
@@ -218,7 +248,18 @@ var TRIGGERS_RAW = [
   ["2026-10-13","G","Changan",15],
   ["2026-10-13","G","Peugeot",6],
   ["2026-10-14","G","Changan",11],
-  ["2026-10-14","G","Peugeot",6]
+  ["2026-10-14","G","Deepal",26],
+  ["2026-10-14","G","Peugeot",6],
+  ["2026-10-15","G","Changan",50],
+  ["2026-10-15","G","Deepal",23],
+  ["2026-10-15","G","Peugeot",14],
+  ["2026-10-16","G","Changan",34],
+  ["2026-10-16","G","Deepal",28],
+  ["2026-10-16","G","Peugeot",52],
+  ["2026-10-17","G","Changan",0],
+  ["2026-10-17","G","Peugeot",12],
+  ["2026-10-18","G","Changan",0],
+  ["2026-10-18","G","Peugeot",0]
 ];
 // ═══ END DATA ═══
 
